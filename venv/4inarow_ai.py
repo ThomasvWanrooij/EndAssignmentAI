@@ -307,3 +307,13 @@ while not game_over:
 
     if game_over:
         pygame.time.wait(3000)
+
+def play_again():
+    while True:
+        answer = input("Do you want to play again?")
+        if not answer or answer.lower() in ('yes'):
+            return True
+        elif answer.lower() in ('no'):
+            return False
+        else:
+            print("Not a valid answer!")
