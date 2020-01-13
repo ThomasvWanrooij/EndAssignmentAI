@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+<<<<<<< HEAD
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.8" project-jdk-type="Python SDK" />
+=======
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.8 (EndAssignmentAI)" project-jdk-type="Python SDK" />
+>>>>>>> 545f349501b94be30292b98ae39b9a7fe8866bd1
 </project>
