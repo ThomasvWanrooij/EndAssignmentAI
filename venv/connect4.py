@@ -100,19 +100,7 @@ def pos_score(field, piece):
     count_center = array_center.count(piece)
     score += count_center * 3
 
-    # Negative slope diagonal scores
-    for r in range(count_row - 3):
-        for c in range(count_column - 3):
-            series = [field[r + 3 - i][c + i] for i in range(length_series)]
-            score += series_evaluation(series, piece)
-
-    # Positive slope diagonal scores
-    for r in range(count_row - 3):
-        for c in range(count_column - 3):
-            series = [field[r + i][c + i] for i in range(length_series)]
-            score += series_evaluation(series, piece)
-
-    # Vertical scores
+     # Vertical scores
     for c in range(count_column):
         array_column = [int(i) for i in list(field[:, c])]
         for r in range(count_row - 3):
@@ -124,6 +112,18 @@ def pos_score(field, piece):
         array_row = [int(i) for i in list(field[r, :])]
         for c in range(count_column - 3):
             series = array_row[c:c + length_series]
+            score += series_evaluation(series, piece)
+
+    # Positive slope diagonal scores
+    for r in range(count_row - 3):
+        for c in range(count_column - 3):
+            series = [field[r + i][c + i] for i in range(length_series)]
+            score += series_evaluation(series, piece)
+
+    # Negative slope diagonal scores
+    for r in range(count_row - 3):
+        for c in range(count_column - 3):
+            series = [field[r + 3 - i][c + i] for i in range(length_series)]
             score += series_evaluation(series, piece)
 
     return score
@@ -139,16 +139,15 @@ def minimax(field, depth, alpha, beta, maximizing_player):
     if depth == 0 or is_last:
         if is_last:
             if win_game(field, piece_AI):
-                return (None, 10000000000)
+                return None, 100000000000000
             elif win_game(field, player):
-                return (None, -10000000000)
+                return None, -100000000000000
             else:
                 # No more possible moves
-                return (None, 0)
+                return None, 0
         # If depth is 0
         else:
-            return (None, pos_score(field, piece_AI))
-
+            return None, pos_score(field, piece_AI)
     if maximizing_player:
         value = - math.inf
         col = random.choice(valid_locs)
@@ -176,7 +175,7 @@ def minimax(field, depth, alpha, beta, maximizing_player):
             if score_new < value:
                 value = score_new
                 col = column
-            beta = min(alpha, value)
+            beta = min(beta, value)
             if beta <= alpha:
                 break
         return col, value
@@ -211,6 +210,7 @@ def draw_field(field):
         for r in range(count_row):
             pygame.draw.rect(screen, color_field, (c * size_squares, r * size_squares + size_squares, size_squares, size_squares))
             pygame.draw.circle(screen, color_background, (int(c * size_squares + size_squares / 2), int(r * size_squares + size_squares + size_squares / 2)), radius)
+
     for c in range(count_column):
         for r in range(count_row):
             if field[r][c] == piece_player:
@@ -237,8 +237,8 @@ draw_field(field)
 pygame.display.update()
 
 font = pygame.font.SysFont("courier", 50)
-move = player #random.randint(player, AI)
-depth = 5
+move = random.randint(player, AI)
+depth = 2
 
 while not lost_game:
     for event in pygame.event.get():
@@ -279,6 +279,7 @@ while not lost_game:
         if location_valid(field, column):
             row = next_free_row(field, column)
             piece_drop(field, row, column, piece_AI)
+
             if win_game(field, piece_AI):
                 label = font.render("Winner: Player 2!", 1, color_win)
                 screen.blit(label, (60, 10))
@@ -290,3 +291,5 @@ while not lost_game:
             move += 1
             move = move % 2
 
+    if lost_game:
+        pygame.time.wait(5000)
