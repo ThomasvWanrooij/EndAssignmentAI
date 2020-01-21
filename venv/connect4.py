@@ -87,8 +87,8 @@ def series_evaluation(series, piece):
 
     if series.count(piece_opponent) == 3 and series.count(empty_space) == 1:
         score -= 100
-    #elif series.count(piece_opponent) == 2 and series.count(empty_space) == 2:
-    #    score -= 2
+    elif series.count(piece_opponent) == 2 and series.count(empty_space) == 2:
+        score -= 2
     return score
 
 
@@ -139,9 +139,9 @@ def minimax(field, depth, alpha, beta, maximizing_player):
     if depth == 0 or is_last:
         if is_last:
             if win_game(field, piece_AI):
-                return None, 100000000000000
+                return None, math.inf
             elif win_game(field, player):
-                return None, -100000000000000
+                return None, - math.inf
             else:
                 # No more possible moves
                 return None, 0
@@ -165,6 +165,7 @@ def minimax(field, depth, alpha, beta, maximizing_player):
         return col, value
 
     else:
+    # If minimizing player
         value = math.inf
         col = random.choice(valid_locs)
         for column in valid_locs:
@@ -226,11 +227,11 @@ lost_game = False
 
 pygame.init()
 
-size_squares = 90
+size_squares = 110
 width = size_squares * count_column
 height = size_squares * (count_row + 1)
 size = (width, height)
-radius = int(size_squares / 2 - 5)
+radius = int(size_squares / 2 - 10)
 
 screen = pygame.display.set_mode(size)
 draw_field(field)
@@ -238,7 +239,7 @@ pygame.display.update()
 
 font = pygame.font.SysFont("courier", 50)
 move = random.randint(player, AI)
-depth = 2
+depth = 1
 
 while not lost_game:
     for event in pygame.event.get():
