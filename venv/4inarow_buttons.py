@@ -1,0 +1,370 @@
+"""
+
+Thomas van Wanrooij (s2153270) & Noa van der Klooster (s2174162)
+Artificial Intelligence & Programming
+Final Project: 4 in a row
+2020-01-21
+
+"""
+
+import pygame
+import sys
+import math
+import numpy
+import random
+
+import pyfirmata
+from pyfirmata import Arduino, util
+import time
+
+port = "COM5"
+ard = pyfirmata.Arduino(port)
+
+b0 = ard.get_pin("d:2:i").pin_number
+b1 = ard.get_pin("d:3:i").pin_number
+b2 = ard.get_pin("d:4:i").pin_number
+b3 = ard.get_pin("d:5:i").pin_number
+b4 = ard.get_pin("d:6:i").pin_number
+b5 = ard.get_pin("d:7:i").pin_number
+b6 = ard.get_pin("d:8:i").pin_number
+
+buttons = [b0, b1, b2, b3, b4, b5, b6]
+
+n1 = ard.get_pin("d:9:p").pin_number
+
+iterator = pyfirmata.util.Iterator(ard)
+iterator.start()
+
+# Global variables
+count_row = 6
+count_column = 7
+length_series = 4
+
+empty_space = 0
+piece_player = 1
+piece_AI = 2
+player = 0
+AI = 1
+
+color_field = (150, 20, 142)
+color_background = (104, 255, 23)
+color_player1 = (13, 110, 255)
+color_AI = (255, 13, 13)
+color_win = (0, 0, 0)
+
+win = False
+lose = False
+
+
+def make_field():
+    field = numpy.zeros((count_row, count_column))
+    return field
+
+
+def piece_drop(field, row, column, piece):
+    field[row][column] = piece
+
+
+def location_valid(field, column):
+    return field[count_row - 1][column] == 0
+
+
+def next_free_row(field, column):
+    for r in range(count_row):
+        if field[r][column] == 0:
+            return r
+
+
+def print_field(field):
+    print(numpy.flip(field, 0))
+
+
+def win_game(field, piece):
+    # Check all negative slope diagonals for a win
+    for r in range(3, count_row):
+        for c in range(count_column - 3):
+            if field[r][c] == piece and field[r - 1][c + 1] == piece and field[r - 2][c + 2] == piece and field[r - 3][c + 3] == piece:
+                return True
+
+    # Check all positive slope diagonals for a win
+    for r in range(count_row - 3):
+        for c in range(count_column - 3):
+            if field[r][c] == piece and field[r + 1][c + 1] == piece and field[r + 2][c + 2] == piece and field[r + 3][c + 3] == piece:
+                return True
+
+    # Check all verticals for a win
+    for r in range(count_row - 3):
+        for c in range(count_column):
+            if field[r][c] == piece and field[r + 1][c] == piece and field[r + 2][c] == piece and field[r + 3][c] == piece:
+                return True
+
+    # Check all horizontals for a win
+    for r in range(count_row):
+        for c in range(count_column - 3):
+            if field[r][c] == piece and field[r][c + 1] == piece and field[r][c + 2] == piece and field[r][c + 3] == piece:
+                return True
+
+
+def series_evaluation(series, piece):
+    score = 0
+
+    piece_opponent = piece_player
+    if piece == piece_player:
+        piece_opponent = piece_AI
+
+    if series.count(piece) == 4:
+        score += 1000
+    elif series.count(piece) == 3 and series.count(empty_space) == 1:
+        score += 5
+    elif series.count(piece) == 2 and series.count(empty_space) == 2:
+        score += 2
+
+    if series.count(piece_opponent) == 3 and series.count(empty_space) == 1:
+        score -= 100
+    elif series.count(piece_opponent) == 2 and series.count(empty_space) == 2:
+        score -= 2
+    return score
+
+
+def pos_score(field, piece):
+    score = 0
+
+    # Middle column score
+    array_center = [int(i) for i in list(field[:, 3])]
+    count_center = array_center.count(piece)
+    score += count_center * 3
+
+     # Vertical scores
+    for c in range(count_column):
+        array_column = [int(i) for i in list(field[:, c])]
+        for r in range(count_row - 3):
+            series = array_column[r:r + length_series]
+            score += series_evaluation(series, piece)
+
+    # Horizontal scores
+    for r in range(count_row):
+        array_row = [int(i) for i in list(field[r, :])]
+        for c in range(count_column - 3):
+            series = array_row[c:c + length_series]
+            score += series_evaluation(series, piece)
+
+    # Positive slope diagonal scores
+    for r in range(count_row - 3):
+        for c in range(count_column - 3):
+            series = [field[r + i][c + i] for i in range(length_series)]
+            score += series_evaluation(series, piece)
+
+    # Negative slope diagonal scores
+    for r in range(count_row - 3):
+        for c in range(count_column - 3):
+            series = [field[r + 3 - i][c + i] for i in range(length_series)]
+            score += series_evaluation(series, piece)
+
+    return score
+
+
+def is_last_node(field):
+    return win_game(field, piece_player) or win_game(field, piece_AI) or len(search_valid_loc(field)) == 0
+
+
+def minimax(field, depth, alpha, beta, maximizing_player):
+    valid_locs = search_valid_loc(field)
+    is_last = is_last_node(field)
+    if depth == 0 or is_last:
+        if is_last:
+            if win_game(field, piece_AI):
+                return None, math.inf
+            elif win_game(field, player):
+                return None, - math.inf
+            else:
+                # No more possible moves
+                return None, 0
+        # If depth is 0
+        else:
+            return None, pos_score(field, piece_AI)
+    if maximizing_player:
+        value = - math.inf
+        col = random.choice(valid_locs)
+        for column in valid_locs:
+            row = next_free_row(field, column)
+            copy_field = field.copy()
+            piece_drop(copy_field, row, column, piece_AI)
+            score_new = minimax(copy_field, depth - 1, alpha, beta, False)[1]
+            if score_new > value:
+                value = score_new
+                col = column
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break
+        return col, value
+
+    else:
+    # If minimizing player
+        value = math.inf
+        col = random.choice(valid_locs)
+        for column in valid_locs:
+            row = next_free_row(field, column)
+            copy_field = field.copy()
+            piece_drop(copy_field, row, column, piece_player)
+            score_new = minimax(copy_field, depth - 1, alpha, beta, True)[1]
+            if score_new < value:
+                value = score_new
+                col = column
+            beta = min(beta, value)
+            if beta <= alpha:
+                break
+        return col, value
+
+
+def search_valid_loc(field):
+    valid_locs = []
+    for column in range(count_column):
+        if location_valid(field, column):
+            valid_locs.append(column)
+    return valid_locs
+
+
+def next_best_move(field, piece):
+    valid_locs = search_valid_loc(field)
+    highest_score = -10000
+    highest_column = random.choice(valid_locs)
+    for column in valid_locs:
+        row = next_free_row(field, column)
+        current_field = field.copy()
+        piece_drop(current_field, row, column, piece)
+        score = pos_score(current_field, piece)
+        if score > highest_score:
+            highest_score = score
+            highest_column = column
+
+    return highest_column
+
+
+def draw_field(field):
+    for c in range(count_column):
+        for r in range(count_row):
+            pygame.draw.rect(screen, color_field, (c * size_squares, r * size_squares + size_squares, size_squares, size_squares))
+            pygame.draw.circle(screen, color_background, (int(c * size_squares + size_squares / 2), int(r * size_squares + size_squares + size_squares / 2)), radius)
+
+    for c in range(count_column):
+        for r in range(count_row):
+            if field[r][c] == piece_player:
+                pygame.draw.circle(screen, color_player1, (int(c * size_squares + size_squares / 2), height - int(r * size_squares + size_squares / 2)), radius)
+            elif field[r][c] == piece_AI:
+                pygame.draw.circle(screen, color_AI, (int(c * size_squares + size_squares / 2), height - int(r * size_squares + size_squares / 2)), radius)
+    pygame.display.update()
+
+
+def play_note():
+    notes_click = [2.5, 0, 5, 0]
+    notes_win = [5, 0, 5, 2.5, 0, 5, 0, 5, 0]
+    notes_lose = [5, 5, 5, 4, 4, 4, 2, 2, 2, 2, 0]
+    noteDurations = [1 / 12]
+    pauseBetweenNotes = noteDurations[0] * 1.30
+
+    if win:
+        for i in notes_win:
+            time.sleep(pauseBetweenNotes)
+            ard.digital[n1].write(i)
+    elif lose:
+        for i in notes_lose:
+            time.sleep(pauseBetweenNotes)
+            ard.digital[n1].write(i)
+    else:
+        for i in notes_click:
+            time.sleep(pauseBetweenNotes)
+            ard.digital[n1].write(i)
+
+
+def check_pressed(pin_num):
+    pressed = ard.digital[pin_num].read()
+
+    if pressed == 0:
+        play_note()
+        if pin_num == b0:
+            return 0
+        elif pin_num == b1:
+            return 1
+        elif pin_num == b2:
+            return 2
+        elif pin_num == b3:
+            return 3
+        elif pin_num == b4:
+            return 4
+        elif pin_num == b5:
+            return 5
+        elif pin_num == b6:
+            return 6
+        else:
+            return None
+
+
+field = make_field()
+print_field(field)
+lost_game = False
+
+pygame.init()
+
+size_squares = 110
+width = size_squares * count_column
+height = size_squares * (count_row + 1)
+size = (width, height)
+radius = int(size_squares / 2 - 10)
+
+screen = pygame.display.set_mode(size)
+draw_field(field)
+pygame.display.update()
+
+font = pygame.font.SysFont("courier", 50)
+move = random.randint(player, AI)
+depth = 1
+
+while not lost_game:
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+
+    # Input player
+    if move == player:
+        for x in buttons:
+            time.sleep(0.001)
+            column = check_pressed(x)
+            if column is not None:
+                break
+
+        if location_valid(field, column):
+            row = next_free_row(field, column)
+            piece_drop(field, row, column, piece_player)
+            if win_game(field, piece_player):
+                label = font.render("Winner: Player 1!", 1, color_win)
+                win = True
+                play_note()
+                screen.blit(label, (60, 10))
+                lost_game = True
+
+            move += 1
+            move = move % 2
+            print_field(field)
+            draw_field(field)
+
+    # Input AI
+    if move == AI and not lost_game:
+        column, minimax_score = minimax(field, depth, - math.inf, math.inf, True)
+
+        if location_valid(field, column):
+            row = next_free_row(field, column)
+            piece_drop(field, row, column, piece_AI)
+
+            if win_game(field, piece_AI):
+                label = font.render("Winner: Player 2!", 1, color_win)
+                lose = True
+                play_note()
+                screen.blit(label, (60, 10))
+                lost_game = True
+
+            print_field(field)
+            draw_field(field)
+
+            move += 1
+            move = move % 2
