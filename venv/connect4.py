@@ -1,3 +1,12 @@
+"""
+
+Thomas van Wanrooij (s2153270) & Noa van der Klooster (s2174162)
+Artificial Intelligence & Programming
+Final Project: 4 in a row
+2020-01-21
+
+"""
+
 import pygame
 import sys
 import math
