@@ -290,6 +290,3 @@ while not lost_game:
 
             move += 1
             move = move % 2
-
-    if lost_game:
-        pygame.time.wait(5000)
