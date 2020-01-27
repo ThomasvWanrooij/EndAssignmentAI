@@ -1,0 +1,1 @@
+#   This class handles the sound effects that are present in the game
