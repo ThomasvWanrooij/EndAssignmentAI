@@ -269,6 +269,7 @@ while not lost_game:
             if move == player:
                 x_pos = event.pos[0]
                 column = int(math.floor(x_pos / size_squares))
+                print(type(column))
                 if location_valid(field, column):
                     row = next_free_row(field, column)
                     piece_drop(field, row, column, piece_player)
