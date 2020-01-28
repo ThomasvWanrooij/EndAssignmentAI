@@ -18,8 +18,7 @@ import numpy
 import random
 import time
 
-import pyfirmata
-from pyfirmata import Arduino, util
+
 
 # Global variables
 count_row = 6

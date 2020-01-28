@@ -2,6 +2,8 @@
 
 
 class Input:
+    import pyfirmata
+    from pyfirmata import Arduino, util
 
     def __init__(self):
         # Required for communication with Arduino

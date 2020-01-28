@@ -3,30 +3,37 @@
 
 class Sound:
 
-    def __init__(self):
-        # Set to false at the start of the game, for sound selection
-        win = False
-        lose = False
+    import simpleaudio as sa
 
-    def play_note():
-        notes_click = [2.5, 0, 5, 0]  # Sequence of voltages for click
-        notes_win = [5, 0, 5, 2.5, 0, 5, 0, 5, 0]  # Sequence of voltages for win (player)
-        notes_lose = [5, 5, 5, 4, 4, 4, 2, 2, 2, 2, 0]  # Sequence of voltages for loss (player)
-        noteDurations = [
-            1 / 12]  # All notes have same duration, but this can be changed by adding more possible durations
-        pauseBetweenNotes = noteDurations[0] * 1.30  # This value seemed to sound best
+    # Set to false at the start of the game, for sound selection
+    game_state = None
+    win = False
+    lose = False
+    play_obj = None
 
-        if win:
-            for i in notes_win:  # Pick from win sequence
-                time.sleep(pauseBetweenNotes)
-                ard.digital[n1].write(i)  # Write to Arduino pin 9
-        elif lose:
-            for i in notes_lose:  # Pick from loss sequence
-                time.sleep(pauseBetweenNotes)
-                ard.digital[n1].write(i)  # Write to Arduino pin 9
-        else:
-            for i in notes_click:  # Pick from click sequence
-                time.sleep(pauseBetweenNotes)
-                ard.digital[n1].write(i)  # Write to Arduino pin 9
+    lose_sound = sa.WaveObject.from_wave_file("lose.wav")
+    win_sound = sa.WaveObject.from_wave_file("win.wav")
+    click_sound = sa.WaveObject.from_wave_file("coin.wav")
+
+    def set_tune(self, game_state):
+        self.game_state = game_state
+
+    def play_note(self):
+        if self.game_state == 0:
+            self.play_obj = self.click_sound.play()
+            self.play_obj.wait_done()
+        elif self.game_state == 1:
+            self.play_obj = self.win_sound.play()
+            self.play_obj.wait_done()
+        elif self.game_state == 2:
+            self.play_obj = self.lose_sound.play()
+            self.play_obj.wait_done()
 
 
+geluidje = Sound()
+geluidje.set_tune(0)
+geluidje.play_note()
+geluidje.set_tune(1)
+geluidje.play_note()
+geluidje.set_tune(2)
+geluidje.play_note()
