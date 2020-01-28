@@ -3,22 +3,21 @@
 
 class Sound:
 
-    import simpleaudio as sa
+    def __init__(self):
+        import simpleaudio as sa
 
-    # Set to false at the start of the game, for sound selection
-    game_state = None
-    win = False
-    lose = False
-    play_obj = None
+        self.play_obj = None
+        self.game_state = None
 
-    lose_sound = sa.WaveObject.from_wave_file("lose.wav")
-    win_sound = sa.WaveObject.from_wave_file("win.wav")
-    click_sound = sa.WaveObject.from_wave_file("coin.wav")
+        self.click_sound = sa.WaveObject.from_wave_file("coin.wav")
+        self.win_sound = sa.WaveObject.from_wave_file("win.wav")
+        self.lose_sound = sa.WaveObject.from_wave_file("lose.wav")
 
     def set_tune(self, game_state):
         self.game_state = game_state
 
     def play_note(self):
+        self.play_obj = None
         if self.game_state == 0:
             self.play_obj = self.click_sound.play()
             self.play_obj.wait_done()
