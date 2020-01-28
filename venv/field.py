@@ -7,6 +7,8 @@ Final Project: 4 in a row
 
 General structure of the base-game of Connect 4 is based on Keith Galli's example videos.
 
+The program uses the following files: field.py, game.py, AI.py, input.py and sound.py
+
 """
 
 import pygame
