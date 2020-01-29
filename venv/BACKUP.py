@@ -192,7 +192,7 @@ def minimax(field, depth, alpha, beta, maximizing_player):
     valid_locs = search_valid_loc(field)
     is_last = is_last_node(field)
 
-    if depth == 0 or is_last:
+    if depth == 0 or is_last:  # Check if depth is 0, or if the game is over in current position
 
         if is_last:
 
@@ -207,14 +207,15 @@ def minimax(field, depth, alpha, beta, maximizing_player):
         else:
             return None, pos_score(field, piece_AI)
 
-    if maximizing_player:
+    if maximizing_player:   # Will find the highest evaluation that can be obtained from current game state
         value = - math.inf
         col = random.choice(valid_locs)  # Start at random
-        for column in valid_locs:
+        for column in valid_locs:   # Loop through children of the current position
             row = next_free_row(field, column)
             copy_field = field.copy()
             piece_drop(copy_field, row, column, piece_AI)
-            score_new = minimax(copy_field, depth - 1, alpha, beta, False)[1]  # Recursive algorithm
+            # Recursive function passing in the child, depth-1 and False puts the turn to the opponent. (who minimizes)
+            score_new = minimax(copy_field, depth - 1, alpha, beta, False)[1]
 
             if score_new > value:  # If newly calculated score is an improvement, pick that
                 value = score_new
@@ -225,7 +226,7 @@ def minimax(field, depth, alpha, beta, maximizing_player):
                 break
         return col, value
 
-    else:
+    else:   # Will find the lowest evaluation that can be obtained from current game state
         # If minimizing player
         value = math.inf
         col = random.choice(valid_locs)
@@ -233,7 +234,8 @@ def minimax(field, depth, alpha, beta, maximizing_player):
             row = next_free_row(field, column)
             copy_field = field.copy()
             piece_drop(copy_field, row, column, piece_player)
-            score_new = minimax(copy_field, depth - 1, alpha, beta, True)[1]  # Recursive algorithm
+            # Recursive function passing in the child, depth-1 and True puts the turn to the player. (who maximizes)
+            score_new = minimax(copy_field, depth - 1, alpha, beta, True)[1]
 
             if score_new < value:  # If newly calculated score is an improvement, pick that
                 value = score_new
@@ -253,21 +255,21 @@ def search_valid_loc(field):
     return valid_locs
 
 
-def next_best_move(field, piece):
-    valid_locs = search_valid_loc(field)
-    highest_score = -10000
-    highest_column = random.choice(valid_locs)
-    for column in valid_locs:
-        row = next_free_row(field, column)
-        current_field = field.copy()
-        piece_drop(current_field, row, column, piece)
-        score = pos_score(current_field, piece)
-
-        if score > highest_score:
-            highest_score = score
-            highest_column = column
-
-    return highest_column
+# def next_best_move(field, piece):
+#     valid_locs = search_valid_loc(field)
+#     highest_score = -10000
+#     highest_column = random.choice(valid_locs)
+#     for column in valid_locs:
+#         row = next_free_row(field, column)
+#         current_field = field.copy()
+#         piece_drop(current_field, row, column, piece)
+#         score = pos_score(current_field, piece)
+#
+#         if score > highest_score:
+#             highest_score = score
+#             highest_column = column
+#
+#     return highest_column
 
 
 def draw_field(field):

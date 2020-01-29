@@ -2,16 +2,16 @@
 
 
 class Sound:
+    import simpleaudio as sa
 
     def __init__(self):
-        import simpleaudio as sa
 
         self.play_obj = None
         self.game_state = None
 
-        self.click_sound = sa.WaveObject.from_wave_file("coin.wav")
-        self.win_sound = sa.WaveObject.from_wave_file("win.wav")
-        self.lose_sound = sa.WaveObject.from_wave_file("lose.wav")
+        self.click_sound = Sound.sa.WaveObject.from_wave_file("coin.wav")
+        self.win_sound = Sound.sa.WaveObject.from_wave_file("win.wav")
+        self.lose_sound = Sound.sa.WaveObject.from_wave_file("lose.wav")
 
     def set_tune(self, game_state):
         self.game_state = game_state
@@ -27,12 +27,3 @@ class Sound:
         elif self.game_state == 2:
             self.play_obj = self.lose_sound.play()
             self.play_obj.wait_done()
-
-
-geluidje = Sound()
-geluidje.set_tune(0)
-geluidje.play_note()
-geluidje.set_tune(1)
-geluidje.play_note()
-geluidje.set_tune(2)
-geluidje.play_note()
